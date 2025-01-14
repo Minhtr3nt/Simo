@@ -1,7 +1,7 @@
 package com.example.simo.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,4 +24,10 @@ public class User {
             ,inverseJoinColumns = @JoinColumn(name = "role_name", referencedColumnName = "name")
     )
     private List<Role> roles;
+
+    @JsonIgnore
+    @OneToOne
+    @JoinColumn(name = "key_id", referencedColumnName = "id")
+    private Key key;
+
 }

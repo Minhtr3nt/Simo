@@ -1,6 +1,9 @@
 package com.example.simo.service;
 
+import com.example.simo.model.Key;
 import com.example.simo.model.User;
+import com.example.simo.repository.KeyRepository;
+
 import com.example.simo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
