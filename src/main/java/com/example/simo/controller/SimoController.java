@@ -20,7 +20,7 @@ public class SimoController {
     private final SimoService simoService;
 
 
-    @PostMapping("/decode")
+    @PostMapping("/getToken")
     public ResponseEntity<String> decodeAuthorization(@RequestHeader("Authorization") String authorizationHeader) {
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Basic ")) {
