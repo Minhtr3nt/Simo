@@ -1,5 +1,6 @@
 package com.example.simo.service.simo;
 
+import com.example.simo.dto.request.RefreshTokenRequest;
 import com.example.simo.dto.response.TokenResponse;
 import com.example.simo.model.Key;
 import com.example.simo.model.Token;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.text.ParseException;
 import java.time.Instant;
@@ -46,17 +48,18 @@ public class SimoService {
     public TokenResponse getToken( String userName, String password ,String consumerKey, String secretKey){
         Key key = verifiedKey(consumerKey, secretKey);
         User user = verifiedUser(userName, password);
-        if(key !=null&& user!=null) {
-            return generateToken(user);
+         return generateToken(user);
 
-        }
-        return generateToken(user);
+
+
     }
 
     public boolean verifiedToken(String token, boolean refresh) throws JOSEException, ParseException {
         JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
         SignedJWT signedJWT = SignedJWT.parse(token);
-        Date expiryTime = (refresh)?new Date(signedJWT.getJWTClaimsSet().getIssueTime().toInstant().plus(REFRESHABLE_TIME, ChronoUnit.SECONDS).toEpochMilli()) : signedJWT.getJWTClaimsSet().getExpirationTime();
+        Date expiryTime = (refresh)?new Date(signedJWT.getJWTClaimsSet().getIssueTime()
+                .toInstant().plus(REFRESHABLE_TIME, ChronoUnit.SECONDS).toEpochMilli())
+                    : signedJWT.getJWTClaimsSet().getExpirationTime();
         boolean verified = signedJWT.verify(verifier);
         if(verified && expiryTime.after(new Date())){
             return true;
@@ -64,14 +67,17 @@ public class SimoService {
         return false;
     }
 
-    public TokenResponse refreshToken(String token) throws ParseException, JOSEException {
-
+    public TokenResponse refreshToken(String consumerKey, String secretKey, RefreshTokenRequest refreshTokenRequest)
+            throws ParseException, JOSEException {
+        Key key = verifiedKey(consumerKey, secretKey);
+        String token = refreshTokenRequest.getRefresh_token();
         if(verifiedToken(token, true)) {
             SignedJWT signer = SignedJWT.parse(token);
-
-                String userName = signer.getJWTClaimsSet().getSubject();
-                Key key = keyRepository.findByConsumerKey(userName);
-                //return generateToken(user);
+            Token token2= tokenRepository.findByToken(token);
+            tokenRepository.delete(token2);
+            String userName = signer.getJWTClaimsSet().getSubject();
+                User user = userRepository.findByUserName(userName);
+                return generateToken(user);
         }
         return null;
     }
@@ -135,6 +141,7 @@ public class SimoService {
 
             Token token = new Token();
             token.setToken(jwsObject.serialize());
+            token.setUser(user);
             tokenRepository.save(token);
 
             return tokenResponse;

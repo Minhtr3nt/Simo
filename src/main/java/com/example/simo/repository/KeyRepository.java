@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 public interface KeyRepository extends JpaRepository<Key, Long> {
     Key findByConsumerKey(String consumerKey);
     Key findByUser_UserName(String userName);
+    Key findByUser_Token_Token(String token);
 }

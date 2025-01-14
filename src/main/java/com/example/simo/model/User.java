@@ -27,7 +27,11 @@ public class User {
 
     @JsonIgnore
     @OneToOne
-    @JoinColumn(name = "key_id", referencedColumnName = "id")
+    @JoinColumn(name = "key_id")
     private Key key;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Token> token;
 
 }

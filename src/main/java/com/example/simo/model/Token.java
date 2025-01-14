@@ -9,6 +9,14 @@ import lombok.Setter;
 @Setter
 public class Token {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", nullable = false)
+    private String id;
+
     private String token;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
 }
