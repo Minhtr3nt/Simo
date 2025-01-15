@@ -6,8 +6,10 @@ import com.example.simo.dto.response.ApiResponse;
 import com.example.simo.dto.response.TokenResponse;
 import com.example.simo.exception.ErrorCode;
 import com.example.simo.exception.SimoException;
+import com.example.simo.service.simo.IPAddressService;
 import com.example.simo.service.simo.SimoService;
 import com.nimbusds.jose.JOSEException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,11 +24,17 @@ import java.util.Base64;
 public class SimoController {
 
     private final SimoService simoService;
-
+    private final IPAddressService ipAddressService;
 
     @PostMapping("/getToken")
-    public ResponseEntity<ApiResponse> decodeAuthorization(@RequestHeader("Authorization") String authorizationHeader,
-                                                           @RequestBody AccountRequest accountRequest) {
+    public ResponseEntity<ApiResponse> tokenAuthorization(@RequestHeader("Authorization") String authorizationHeader,
+                                                          @RequestBody AccountRequest accountRequest,
+                                                          HttpServletRequest request) {
+
+        boolean ipCheck = ipAddressService.CheckIPAddress(request, accountRequest);
+        if(!ipCheck){
+            throw new SimoException(ErrorCode.IP_INVALID);
+        }
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Basic ")) {
 

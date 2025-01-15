@@ -13,6 +13,8 @@ public enum ErrorCode {
     TOKEN_INVALID(1004, "Token is invalid", HttpStatus.BAD_REQUEST),
     TOKEN_EXPIRED(1005, "Token is expired, please create a new one", HttpStatus.BAD_REQUEST),
     PASS_INVALID(1006, "Password is invalid", HttpStatus.BAD_REQUEST),
+    IP_INVALID(1007, "IP not found", HttpStatus.BAD_REQUEST),
+    ACCOUNT_IN_USED(1008, "Account in use", HttpStatus.BAD_REQUEST)
     ;
     ErrorCode(int code, String message, HttpStatusCode statusCode){
         this.code = code;

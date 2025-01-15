@@ -23,20 +23,21 @@ import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
-public class SimoGWService  {
+public class SimoGWService {
 
     private final WebClient webClient;
     private final UserRepository userRepository;
 
-    public ApiResponse sendToken (AccountRequest request) {
+    public ApiResponse sendToken(AccountRequest request) {
         User user = userRepository.findByUserName(request.getUserName());
-        String base = user.getConsumerKey()+":"+user.getSecretKey();
+        String base = user.getConsumerKey() + ":" + user.getSecretKey();
         String base64Encode = Base64.getEncoder().encodeToString(base.getBytes());
 
         String apiUrl = "http://localhost:8085/api/v2/simo/getToken";
-        AccountRequest requestPayload = new AccountRequest(request.getGrant_type(),request.getUserName(),
-                                                            request.getPassword());
+        AccountRequest requestPayload = new AccountRequest(request.getGrant_type(), request.getUserName(),
+                request.getPassword());
 
+        try{
             return webClient.post()
                     .uri(apiUrl)
                     .header("Authorization", "Basic " + base64Encode)
@@ -44,6 +45,11 @@ public class SimoGWService  {
                     .retrieve()
                     .bodyToMono(ApiResponse.class)
                     .block();
+        }catch (WebClientResponseException e) {
+            System.out.println("HTTP Status: " + e.getStatusCode());
+            System.out.println("Response Body: " + e.getResponseBodyAsString());
+        }
+        return null;
 
     }
 
@@ -54,15 +60,22 @@ public class SimoGWService  {
         User user = userRepository.findByUserName(userName);
         String base = user.getConsumerKey() + ":" + user.getSecretKey();
         String base64Encode = Base64.getEncoder().encodeToString(base.getBytes());
-        String url= "http://localhost:8085/api/v2/simo/refreshToken";
+        String url = "http://localhost:8085/api/v2/simo/refreshToken";
         RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(request.getRefresh_token(), request.getRefresh_token());
-
-        return webClient.post()
-                .uri(url)
-                .header("Authorization","Basic "+base64Encode)
-                .body(Mono.just(refreshTokenRequest), RefreshTokenRequest.class)
-                .retrieve()
-                .bodyToMono(ApiResponse.class)
-                .block();
+        try {
+            return webClient.post()
+                    .uri(url)
+                    .header("Authorization", "Basic " + base64Encode)
+                    .body(Mono.just(refreshTokenRequest), RefreshTokenRequest.class)
+                    .retrieve()
+                    .bodyToMono(ApiResponse.class)
+                    .block();
+        } catch (WebClientResponseException e) {
+            System.out.println("HTTP Status: " + e.getStatusCode());
+            System.out.println("Response Body: " + e.getResponseBodyAsString());
+        }
+        return null;
     }
 }
+
+
