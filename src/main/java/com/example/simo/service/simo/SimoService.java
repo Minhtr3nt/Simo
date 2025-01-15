@@ -2,10 +2,10 @@ package com.example.simo.service.simo;
 
 import com.example.simo.dto.request.RefreshTokenRequest;
 import com.example.simo.dto.response.TokenResponse;
-import com.example.simo.model.Key;
+import com.example.simo.exception.ErrorCode;
+import com.example.simo.exception.SimoException;
 import com.example.simo.model.Token;
 import com.example.simo.model.User;
-import com.example.simo.repository.KeyRepository;
 
 import com.example.simo.repository.TokenRepository;
 import com.example.simo.repository.UserRepository;
@@ -18,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.text.ParseException;
 import java.time.Instant;
@@ -34,7 +33,6 @@ public class SimoService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
-    private final KeyRepository keyRepository;
 
     @Value("${auth.token.expirationInMils}")
     protected Long VALID_TIME;
@@ -46,10 +44,10 @@ public class SimoService {
     protected String SIGNER_KEY;
 
     public TokenResponse getToken( String userName, String password ,String consumerKey, String secretKey){
-        Key key = verifiedKey(consumerKey, secretKey);
-        User user = verifiedUser(userName, password);
-         return generateToken(user);
 
+        User user = verifiedUser(userName, password, consumerKey, secretKey);
+
+         return generateToken(user);
 
 
     }
@@ -64,44 +62,43 @@ public class SimoService {
         if(verified && expiryTime.after(new Date())){
             return true;
         }
+
         return false;
     }
 
     public TokenResponse refreshToken(String consumerKey, String secretKey, RefreshTokenRequest refreshTokenRequest)
             throws ParseException, JOSEException {
-        Key key = verifiedKey(consumerKey, secretKey);
+        User user = verifiedKey(consumerKey, secretKey);
         String token = refreshTokenRequest.getRefresh_token();
         if(verifiedToken(token, true)) {
-            SignedJWT signer = SignedJWT.parse(token);
+
             Token token2= tokenRepository.findByToken(token);
             tokenRepository.delete(token2);
-            String userName = signer.getJWTClaimsSet().getSubject();
-                User user = userRepository.findByUserName(userName);
+
                 return generateToken(user);
         }
-        return null;
+        throw new SimoException(ErrorCode.TOKEN_EXPIRED);
     }
-    private Key verifiedKey(String consumerKey, String secretKey){
-        Key key =  keyRepository.findByConsumerKey(consumerKey);
-        if(key !=null) {
-            boolean passValid = passwordEncoder.matches(secretKey, key.getSecretKey());
-
-            if (passValid) {
-                return key;
-            }
+    private User verifiedKey(String consumerKey, String secretKey){
+        User user = userRepository.findByConsumerKey(consumerKey);
+        if(secretKey.equals(user.getSecretKey())) {
+                return user;
         }
-        return null;
+        throw new SimoException(ErrorCode.KEY_INVALID);
     }
-    private User verifiedUser(String userName, String password){
+    private User verifiedUser(String userName, String password, String consumerKey, String secretKey){
         User user =  userRepository.findByUserName(userName);
         if(user !=null) {
             boolean passValid = passwordEncoder.matches(password, user.getPassword());
 
-            if (passValid) {
+            if (passValid && user.getSecretKey().equals(secretKey)) {
                 return user;
+            }else{
+                throw new SimoException(ErrorCode.PASS_INVALID);
             }
         }
-        return null;
+        throw new SimoException(ErrorCode.USER_INVALID);
+
     }
     private String buildScope(User user){
         StringJoiner roles = new StringJoiner(" ");

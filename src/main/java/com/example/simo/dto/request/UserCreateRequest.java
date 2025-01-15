@@ -5,10 +5,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class AccountRequest {
-    private String grant_type;
+@AllArgsConstructor
+public class UserCreateRequest {
+
     private String userName;
     private String password;
+    private String consumerKey;
+    private String secretKey;
+
 }

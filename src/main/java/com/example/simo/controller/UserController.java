@@ -1,7 +1,8 @@
 package com.example.simo.controller;
 
+import com.example.simo.dto.request.UserCreateRequest;
 import com.example.simo.dto.response.ApiResponse;
-import com.example.simo.model.Key;
+import com.example.simo.dto.response.UserResponse;
 import com.example.simo.model.User;
 import com.example.simo.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +19,8 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("create")
-    public ResponseEntity<ApiResponse> createUser(@RequestBody User user){
-        User user1 =  userService.createUser(user.getUserName(), user.getPassword());
+    public ResponseEntity<ApiResponse> createUser(@RequestBody UserCreateRequest request){
+        UserResponse user =  userService.createUser(request);
         return ResponseEntity.ok().body(new ApiResponse(200, "Create user success", user));
     }
 }

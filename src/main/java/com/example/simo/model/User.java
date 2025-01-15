@@ -17,6 +17,8 @@ public class User {
     private String id;
     private String userName;
     private String password;
+    private String consumerKey;
+    private String secretKey;
 
     @ManyToMany
     @JoinTable(
@@ -24,11 +26,6 @@ public class User {
             ,inverseJoinColumns = @JoinColumn(name = "role_name", referencedColumnName = "name")
     )
     private List<Role> roles;
-
-    @JsonIgnore
-    @OneToOne
-    @JoinColumn(name = "key_id")
-    private Key key;
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

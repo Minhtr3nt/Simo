@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.text.ParseException;
 
 @RestController
-@RequestMapping("${api.prefix}/key")
+@RequestMapping("${api.prefix}/simogw")
 @RequiredArgsConstructor
 public class SimoGWController {
 

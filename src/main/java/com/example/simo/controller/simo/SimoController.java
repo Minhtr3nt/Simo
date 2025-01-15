@@ -4,10 +4,11 @@ import com.example.simo.dto.request.AccountRequest;
 import com.example.simo.dto.request.RefreshTokenRequest;
 import com.example.simo.dto.response.ApiResponse;
 import com.example.simo.dto.response.TokenResponse;
+import com.example.simo.exception.ErrorCode;
+import com.example.simo.exception.SimoException;
 import com.example.simo.service.simo.SimoService;
 import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,7 +18,7 @@ import java.util.Base64;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("${api.prefix}/token")
+@RequestMapping("${api.prefix}/simo")
 public class SimoController {
 
     private final SimoService simoService;
@@ -38,16 +39,14 @@ public class SimoController {
 
             if (credentials.length == 2) {
                 String consumerKey = credentials[0];
-                String consumerSecret = credentials[1];
-                TokenResponse token = simoService.getToken(accountRequest.getUserName(), accountRequest.getPassword(),consumerKey, consumerSecret);
+                String secretKey = credentials[1];
+                TokenResponse token = simoService.getToken(accountRequest.getUserName(), accountRequest.getPassword(),consumerKey, secretKey);
                 return ResponseEntity.ok().body(new ApiResponse(200,"Get token successful", token));
             } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse(400, "Check header info again", null));
+                throw new SimoException(ErrorCode.AUTHORIZED_HEADER_INVALID);
             }
         } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse(400, "Invalid Authorization header!", null));
+            throw new SimoException(ErrorCode.AUTHORIZED_HEADER_INVALID);
         }
     }
 
@@ -56,7 +55,7 @@ public class SimoController {
 
 
     @PostMapping("/refreshToken")
-    public ResponseEntity<Object> refreshToken(@RequestHeader("Authorization") String authorizationHeader,
+    public ResponseEntity<ApiResponse> refreshToken(@RequestHeader("Authorization") String authorizationHeader,
                                                @RequestBody RefreshTokenRequest refreshTokenRequest) throws ParseException, JOSEException {
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Basic ")) {
@@ -74,12 +73,12 @@ public class SimoController {
                 TokenResponse token = simoService.refreshToken(consumerKey, secretKey ,refreshTokenRequest);
                 return ResponseEntity.ok().body(new ApiResponse(200,"Refresh token successful", token));
             } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ApiResponse(400, "Check header info again", null));
+                throw new SimoException(ErrorCode.AUTHORIZED_HEADER_INVALID);
+
             }
         } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse(400, "Invalid Authorization header!", null));
+            throw new SimoException(ErrorCode.AUTHORIZED_HEADER_INVALID);
+
         }
 
     }
