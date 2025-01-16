@@ -11,7 +11,7 @@ import java.util.Optional;
 @Repository
 public interface IPAddressRepository extends JpaRepository<IPAddress, Long> {
 
-    IPAddress findByIp(String ip);
+    Optional<IPAddress> findByIp(String ip);
     Optional<IPAddress> findByUser_UserNameAndIp(String userName, String ip);
 
     Optional<IPAddress> findByUser_UserNameAndStatus(String userName, IPAddressStatus status);

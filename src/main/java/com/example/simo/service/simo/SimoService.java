@@ -23,6 +23,7 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.UUID;
 
@@ -48,8 +49,6 @@ public class SimoService {
         User user = verifiedUser(userName, password, consumerKey, secretKey);
 
          return generateToken(user);
-
-
     }
 
     public boolean verifiedToken(String token, boolean refresh) throws JOSEException, ParseException {
@@ -63,7 +62,7 @@ public class SimoService {
             return true;
         }
 
-        return false;
+        throw new SimoException(ErrorCode.TOKEN_EXPIRED);
     }
 
     public TokenResponse refreshToken(String consumerKey, String secretKey, RefreshTokenRequest refreshTokenRequest)
@@ -72,7 +71,8 @@ public class SimoService {
         String token = refreshTokenRequest.getRefresh_token();
         if(verifiedToken(token, true)) {
 
-            Token token2= tokenRepository.findByToken(token);
+           Token token2 = tokenRepository.findByToken(token)
+                   .orElseThrow(()-> new SimoException(ErrorCode.TOKEN_NOT_FOUND));
             tokenRepository.delete(token2);
 
                 return generateToken(user);
@@ -80,14 +80,16 @@ public class SimoService {
         throw new SimoException(ErrorCode.TOKEN_EXPIRED);
     }
     private User verifiedKey(String consumerKey, String secretKey){
-        User user = userRepository.findByConsumerKey(consumerKey);
+        User user = userRepository.findByConsumerKey(consumerKey)
+                .orElseThrow(()-> new SimoException(ErrorCode.USER_NOT_FOUND));;
         if(secretKey.equals(user.getSecretKey())) {
                 return user;
         }
         throw new SimoException(ErrorCode.KEY_INVALID);
     }
     private User verifiedUser(String userName, String password, String consumerKey, String secretKey){
-        User user =  userRepository.findByUserName(userName);
+        User user =  userRepository.findByUserName(userName)
+                .orElseThrow(()-> new SimoException(ErrorCode.USER_NOT_FOUND));;
         if(user !=null) {
             boolean passValid = passwordEncoder.matches(password, user.getPassword());
 
@@ -118,7 +120,9 @@ public class SimoService {
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .subject(user.getUserName())
                 .issueTime(new Date())
-                .expirationTime(new Date(Instant.now().plus(VALID_TIME, ChronoUnit.SECONDS).toEpochMilli()))
+                .expirationTime(new Date(Instant.now()
+                        .plus(VALID_TIME, ChronoUnit.SECONDS)
+                        .toEpochMilli()))
                 .claim("scope", buildScope(user))
                 .jwtID(UUID.randomUUID().toString())
                 .build();
@@ -134,7 +138,9 @@ public class SimoService {
 
             tokenResponse.setToken_type("Bearer");
             tokenResponse.setScope(buildScope(user));
-            tokenResponse.setExpires_in(new Date(Instant.now().plus(VALID_TIME, ChronoUnit.SECONDS).toEpochMilli()));
+            tokenResponse.setExpires_in(new Date(Instant.now()
+                    .plus(VALID_TIME, ChronoUnit.SECONDS)
+                    .toEpochMilli()));
 
             Token token = new Token();
             token.setToken(jwsObject.serialize());

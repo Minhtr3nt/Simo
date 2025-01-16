@@ -12,9 +12,9 @@ import java.util.List;
 @Getter
 @Setter
 public class Role {
+
     @Id
     private String name;
-
     private String description;
 
     @ManyToMany(mappedBy = "roles")

@@ -1,10 +1,9 @@
-package com.example.simo.controller;
+package com.example.simo.controller.simo;
 
 import com.example.simo.dto.request.UserCreateRequest;
 import com.example.simo.dto.response.ApiResponse;
 import com.example.simo.dto.response.UserResponse;
-import com.example.simo.model.User;
-import com.example.simo.service.UserService;
+import com.example.simo.service.simo.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("${api.prefix}/user")
 public class UserController {
+
     private final UserService userService;
 
     @PostMapping("create")

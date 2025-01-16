@@ -3,6 +3,8 @@ package com.example.simo.service.simogw;
 import com.example.simo.dto.request.AccountRequest;
 import com.example.simo.dto.request.RefreshTokenRequest;
 import com.example.simo.dto.response.ApiResponse;
+import com.example.simo.exception.ErrorCode;
+import com.example.simo.exception.SimoException;
 import com.example.simo.model.User;
 import com.example.simo.repository.UserRepository;
 import com.nimbusds.jose.JOSEException;
@@ -29,7 +31,8 @@ public class SimoGWService {
     private final UserRepository userRepository;
 
     public ApiResponse sendToken(AccountRequest request) {
-        User user = userRepository.findByUserName(request.getUserName());
+        User user = userRepository.findByUserName(request.getUserName())
+                .orElseThrow(()-> new SimoException(ErrorCode.USER_NOT_FOUND));;
         String base = user.getConsumerKey() + ":" + user.getSecretKey();
         String base64Encode = Base64.getEncoder().encodeToString(base.getBytes());
 
@@ -48,8 +51,10 @@ public class SimoGWService {
         }catch (WebClientResponseException e) {
             System.out.println("HTTP Status: " + e.getStatusCode());
             System.out.println("Response Body: " + e.getResponseBodyAsString());
+            throw new SimoException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }catch (Exception e){
+            throw new SimoException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         }
-        return null;
 
     }
 
@@ -57,7 +62,8 @@ public class SimoGWService {
 
         SignedJWT signedJWT = SignedJWT.parse(request.getRefresh_token());
         String userName = signedJWT.getJWTClaimsSet().getSubject();
-        User user = userRepository.findByUserName(userName);
+        User user = userRepository.findByUserName(userName)
+                .orElseThrow(()-> new SimoException(ErrorCode.USER_NOT_FOUND));;
         String base = user.getConsumerKey() + ":" + user.getSecretKey();
         String base64Encode = Base64.getEncoder().encodeToString(base.getBytes());
         String url = "http://localhost:8085/api/v2/simo/refreshToken";
@@ -73,8 +79,10 @@ public class SimoGWService {
         } catch (WebClientResponseException e) {
             System.out.println("HTTP Status: " + e.getStatusCode());
             System.out.println("Response Body: " + e.getResponseBodyAsString());
+        }catch (Exception e){
+            throw new SimoException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         }
-        return null;
+            throw new SimoException(ErrorCode.UNCATEGORIZED_EXCEPTION);
     }
 }
 

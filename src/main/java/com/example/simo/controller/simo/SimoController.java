@@ -32,17 +32,13 @@ public class SimoController {
                                                           HttpServletRequest request) {
 
         boolean ipCheck = ipAddressService.CheckIPAddress(request, accountRequest);
-        if(!ipCheck){
-            throw new SimoException(ErrorCode.IP_INVALID);
-        }
+
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Basic ")) {
 
             String base64Credentials = authorizationHeader.substring("Basic ".length()).trim();
             byte[] decodedBytes = Base64.getDecoder().decode(base64Credentials);
             String decodedString = new String(decodedBytes, StandardCharsets.UTF_8);
-
-
             String[] credentials = decodedString.split(":", 2);
 
             if (credentials.length == 2) {
@@ -53,6 +49,7 @@ public class SimoController {
             } else {
                 throw new SimoException(ErrorCode.AUTHORIZED_HEADER_INVALID);
             }
+
         } else {
             throw new SimoException(ErrorCode.AUTHORIZED_HEADER_INVALID);
         }
@@ -71,8 +68,6 @@ public class SimoController {
             String base64Credentials = authorizationHeader.substring("Basic ".length()).trim();
             byte[] decodedBytes = Base64.getDecoder().decode(base64Credentials);
             String decodedString = new String(decodedBytes, StandardCharsets.UTF_8);
-
-
             String[] credentials = decodedString.split(":", 2);
 
             if (credentials.length == 2) {
@@ -82,8 +77,8 @@ public class SimoController {
                 return ResponseEntity.ok().body(new ApiResponse(200,"Refresh token successful", token));
             } else {
                 throw new SimoException(ErrorCode.AUTHORIZED_HEADER_INVALID);
-
             }
+
         } else {
             throw new SimoException(ErrorCode.AUTHORIZED_HEADER_INVALID);
 

@@ -13,10 +13,12 @@ public class Token {
     @Column(name = "id", nullable = false)
     private String id;
 
+    @Column(length = 500)
     private String token;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
 
 }
