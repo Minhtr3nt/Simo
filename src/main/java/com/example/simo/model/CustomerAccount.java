@@ -34,7 +34,7 @@ public class CustomerAccount {
     private String quocTich;
 
     @ManyToOne
-    @JoinColumn(name = "report_id")
+    @JoinColumn(name = "report_id", referencedColumnName = "maYeuCau")
     ReportCustomerAccount reportCustomerAccount;
 
 }

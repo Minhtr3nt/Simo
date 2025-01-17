@@ -1,4 +1,4 @@
-package com.example.simo.repository;
+package com.example.simo.repository.collect;
 
 import com.example.simo.model.CustomerAccount;
 import org.springframework.data.jpa.repository.JpaRepository;

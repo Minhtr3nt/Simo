@@ -27,9 +27,8 @@ public class WebConfig{
     private final String[] PUBLIC_ENDPOINT = {
             "/api/v2/simogw/sendRefresh",
             "/api/v2/simogw/sendKey",
-            "/api/v2/simo/getToken",
-            "/api/v2/simo/refreshToken",
-            "/api/v2/simo/getListCustomerAccount",
+            "/api/v2/simo/**",
+
 
     };
 

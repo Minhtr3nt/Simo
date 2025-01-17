@@ -12,6 +12,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.stream.Collectors;
+
 @RequiredArgsConstructor
 @Service
 public class UserService {
@@ -29,7 +31,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setConsumerKey(request.getConsumerKey());
         user.setSecretKey(request.getSecretKey());
-        user.setRoles(roleRepository.findById("USER").stream().toList());
+        user.setRoles(roleRepository.findById("USER").stream().collect(Collectors.toSet()));
         userRepository.save(user);
         return modelMapper.map(user, UserResponse.class);
     }

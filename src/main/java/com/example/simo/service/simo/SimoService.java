@@ -2,18 +2,16 @@ package com.example.simo.service.simo;
 
 import com.example.simo.dto.request.CustomerAccountRequest;
 import com.example.simo.dto.request.RefreshTokenRequest;
+import com.example.simo.dto.request.SuspectedFraudAccountRequest;
 import com.example.simo.dto.response.ApiResponse;
 import com.example.simo.dto.response.TokenResponse;
 import com.example.simo.exception.ErrorCode;
 import com.example.simo.exception.SimoException;
 import com.example.simo.mapper.CustomerAccountMapper;
-import com.example.simo.model.CustomerAccount;
-import com.example.simo.model.ReportCustomerAccount;
-import com.example.simo.model.Token;
-import com.example.simo.model.User;
+import com.example.simo.model.*;
 
-import com.example.simo.repository.CustomerAccountRepository;
-import com.example.simo.repository.ReportCustomerAccountRepository;
+import com.example.simo.repository.collect.CustomerAccountRepository;
+import com.example.simo.repository.collect.ReportRepository;
 import com.example.simo.repository.TokenRepository;
 import com.example.simo.repository.UserRepository;
 import com.nimbusds.jose.*;
@@ -24,7 +22,7 @@ import com.nimbusds.jwt.SignedJWT;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -41,9 +39,10 @@ public class SimoService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
+    private final RedisTemplate redisTemplate;
     private final ModelMapper modelMapper;
     private final CustomerAccountMapper customerAccountMapper;
-    private final ReportCustomerAccountRepository reportCustomerAccountRepository;
+    private final ReportRepository reportRepository;
 
     @Value("${auth.token.expirationInMils}")
     protected Long VALID_TIME;
@@ -77,18 +76,42 @@ public class SimoService {
         }
         throw new SimoException(ErrorCode.TOKEN_EXPIRED_REFRESH);
     }
-    public ApiResponse collectCustomerAccount(String maYeuCau, String kyBaoCao, List<CustomerAccountRequest> request){
-        List<CustomerAccount> customerAccounts = request.stream()
-                .map(customerAccountMapper::toCustomerAccount
-                )
-                .toList();
+    public ApiResponse collectCustomerAccount(String maYeuCau, String kyBaoCao, Set<CustomerAccountRequest> request){
+       // redisTemplate.opsForList().leftPushAll(key, requests);
         ReportCustomerAccount report = new ReportCustomerAccount();
-        report.setCustomerAccounts(customerAccounts);
         report.setMaYeuCau(maYeuCau);
         report.setKyBaoCao(kyBaoCao);
-        reportCustomerAccountRepository.save(report);
+        report.setLoaiBaoCao("Thu thập danh sách TKTT định kỳ");
+
+        Set<CustomerAccount> customerAccounts = request.stream()
+                .map(customerAccountMapper::toCustomerAccount)
+                .peek(customerAccount -> customerAccount.setReportCustomerAccount(report))
+                .collect(Collectors.toSet());
+
+        report.setCustomerAccounts(customerAccounts);
+        reportRepository.save(report);
         return new ApiResponse(0, "Successful", true);
 
+    }
+    public ApiResponse collectSuspectFraudAccount(String maYeuCau, String kyBaoCao, Set<SuspectedFraudAccountRequest> requests){
+        ReportCustomerAccount report = new ReportCustomerAccount();
+        report.setMaYeuCau(maYeuCau);
+        report.setKyBaoCao(kyBaoCao);
+        report.setLoaiBaoCao("Thu thập danh sách TKTT nghi ngờ gian lận");
+        if(reportRepository.existsById(maYeuCau)){
+            throw new SimoException(ErrorCode.REPORTCODE_INVALID);
+        }
+        Set<SuspectedFraudAccount> accounts = requests.stream()
+                .map(account-> modelMapper.map(account,SuspectedFraudAccount.class ))
+                .peek(customerAccount -> customerAccount.setReportCustomerAccount(report))
+                .collect(Collectors.toSet());
+
+        report.setSuspectedFraudAccounts(accounts);
+
+        reportRepository.save(report);
+
+
+        return new ApiResponse(0,"Successful", true);
     }
 
     public boolean verifiedToken(String token, boolean refresh) throws JOSEException, ParseException {

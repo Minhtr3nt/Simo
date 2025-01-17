@@ -6,9 +6,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.NaturalId;
 import org.w3c.dom.stylesheets.LinkStyle;
 
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -16,10 +18,16 @@ import java.util.List;
 public class ReportCustomerAccount {
 
     @Id
+    @NaturalId
     private String maYeuCau;
 
     private String kyBaoCao;
 
+    private String loaiBaoCao;
+
     @OneToMany(mappedBy = "reportCustomerAccount", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<CustomerAccount> customerAccounts;
+    Set<CustomerAccount> customerAccounts;
+
+    @OneToMany(mappedBy = "reportCustomerAccount", cascade = CascadeType.ALL, orphanRemoval = true)
+    Set<SuspectedFraudAccount> suspectedFraudAccounts;
 }

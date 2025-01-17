@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -26,13 +27,13 @@ public class User {
             name = "user_role", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id")
             ,inverseJoinColumns = @JoinColumn(name = "role_name", referencedColumnName = "name")
     )
-    private List<Role> roles;
+    private Set<Role> roles;
 
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Token> token;
+    private Set<Token> token;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<IPAddress> IPsAddress;
+    private Set<IPAddress> IPsAddress;
 
 }

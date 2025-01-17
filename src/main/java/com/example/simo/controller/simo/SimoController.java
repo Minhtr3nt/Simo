@@ -1,6 +1,7 @@
 package com.example.simo.controller.simo;
 
 import com.example.simo.dto.request.CustomerAccountRequest;
+import com.example.simo.dto.request.SuspectedFraudAccountRequest;
 import com.example.simo.dto.request.UserAccountRequest;
 import com.example.simo.dto.request.RefreshTokenRequest;
 import com.example.simo.dto.response.ApiResponse;
@@ -19,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.Base64;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -89,8 +91,19 @@ public class SimoController {
     }
 
     @PostMapping("/getListCustomerAccount")
-    public ResponseEntity<ApiResponse> getListCustomerAccount(@RequestHeader("maYeuCau") String maYeuCau, @RequestHeader("kyBaoCao") String kyBaoCao, @RequestBody List<CustomerAccountRequest> request){
-        ApiResponse apiResponse = simoService.collectCustomerAccount(maYeuCau, kyBaoCao,request);
+    public ResponseEntity<ApiResponse> getListCustomerAccount(@RequestHeader("maYeuCau") String maYeuCau,
+                                                              @RequestHeader("kyBaoCao") String kyBaoCao,
+                                                              @RequestBody Set<CustomerAccountRequest> requests){
+        ApiResponse apiResponse = simoService.collectCustomerAccount(maYeuCau, kyBaoCao,requests);
+        return ResponseEntity.ok().body(apiResponse);
+    }
+
+    @PostMapping("/getListFraudAccount")
+    public ResponseEntity<ApiResponse> getListFraudAccount(@RequestHeader("maYeuCau") String maYeuCau,
+                                                           @RequestHeader("kyBaoCao") String kyBaoCao,
+                                                           @RequestBody Set<SuspectedFraudAccountRequest> requests
+                                                           ){
+        ApiResponse apiResponse = simoService.collectSuspectFraudAccount(maYeuCau, kyBaoCao, requests);
         return ResponseEntity.ok().body(apiResponse);
     }
 
