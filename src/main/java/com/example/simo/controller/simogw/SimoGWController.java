@@ -1,18 +1,17 @@
 package com.example.simo.controller.simogw;
 
-import com.example.simo.dto.request.AccountRequest;
+import com.example.simo.dto.request.CustomerAccountRequest;
+import com.example.simo.dto.request.UserAccountRequest;
 import com.example.simo.dto.request.RefreshTokenRequest;
 import com.example.simo.dto.response.ApiResponse;
 import com.example.simo.service.simogw.SimoGWService;
 import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
+import java.util.List;
 
 @RestController
 @RequestMapping("${api.prefix}/simogw")
@@ -22,8 +21,8 @@ public class SimoGWController {
     private final SimoGWService simoGWService;
 
     @PostMapping("/sendKey")
-    public ResponseEntity<ApiResponse> sendKey(@RequestBody AccountRequest accountRequest){
-       ApiResponse apiResponse =  simoGWService.sendToken(accountRequest);
+    public ResponseEntity<ApiResponse> sendKey(@RequestBody UserAccountRequest userAccountRequest){
+       ApiResponse apiResponse =  simoGWService.sendToken(userAccountRequest);
        return ResponseEntity.ok().body(apiResponse);
     }
 
@@ -31,6 +30,15 @@ public class SimoGWController {
     public ResponseEntity<ApiResponse> sendRefresh(@RequestBody RefreshTokenRequest refreshTokenRequest) throws ParseException, JOSEException {
         ApiResponse apiResponse = simoGWService.refreshToken(refreshTokenRequest);
         return ResponseEntity.ok().body(apiResponse);
+    }
+
+    @PostMapping("/collectCustomerAccount")
+    public ResponseEntity<ApiResponse> collectCusAccount(@RequestHeader("maYeuCau") String maYeuCau,
+                                                         @RequestHeader("kyBaoCao") String kyBaoCao,
+                                                         @RequestBody List<CustomerAccountRequest> request){
+        ApiResponse apiResponse = simoGWService.getCustomerAccountList(maYeuCau, kyBaoCao, request);
+        return ResponseEntity.ok().body(apiResponse);
+
     }
 
 }

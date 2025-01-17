@@ -13,6 +13,8 @@ public class Token {
     @Column(name = "id", nullable = false)
     private String id;
 
+    //private boolean available;
+
     @Column(length = 500)
     private String token;
 

@@ -1,6 +1,7 @@
 package com.example.simo.controller.simo;
 
-import com.example.simo.dto.request.AccountRequest;
+import com.example.simo.dto.request.CustomerAccountRequest;
+import com.example.simo.dto.request.UserAccountRequest;
 import com.example.simo.dto.request.RefreshTokenRequest;
 import com.example.simo.dto.response.ApiResponse;
 import com.example.simo.dto.response.TokenResponse;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.Base64;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,10 +30,10 @@ public class SimoController {
 
     @PostMapping("/getToken")
     public ResponseEntity<ApiResponse> tokenAuthorization(@RequestHeader("Authorization") String authorizationHeader,
-                                                          @RequestBody AccountRequest accountRequest,
+                                                          @RequestBody UserAccountRequest userAccountRequest,
                                                           HttpServletRequest request) {
 
-        boolean ipCheck = ipAddressService.CheckIPAddress(request, accountRequest);
+        boolean ipCheck = ipAddressService.CheckIPAddress(request, userAccountRequest);
 
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Basic ")) {
@@ -44,7 +46,7 @@ public class SimoController {
             if (credentials.length == 2) {
                 String consumerKey = credentials[0];
                 String secretKey = credentials[1];
-                TokenResponse token = simoService.getToken(accountRequest.getUserName(), accountRequest.getPassword(),consumerKey, secretKey);
+                TokenResponse token = simoService.getToken(userAccountRequest.getUserName(), userAccountRequest.getPassword(),consumerKey, secretKey);
                 return ResponseEntity.ok().body(new ApiResponse(200,"Get token successful", token));
             } else {
                 throw new SimoException(ErrorCode.AUTHORIZED_HEADER_INVALID);
@@ -85,4 +87,11 @@ public class SimoController {
         }
 
     }
+
+    @PostMapping("/getListCustomerAccount")
+    public ResponseEntity<ApiResponse> getListCustomerAccount(@RequestHeader("maYeuCau") String maYeuCau, @RequestHeader("kyBaoCao") String kyBaoCao, @RequestBody List<CustomerAccountRequest> request){
+        ApiResponse apiResponse = simoService.collectCustomerAccount(maYeuCau, kyBaoCao,request);
+        return ResponseEntity.ok().body(apiResponse);
+    }
+
 }

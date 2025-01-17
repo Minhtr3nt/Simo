@@ -3,7 +3,7 @@ package com.example.simo.service.simo;
 import com.example.simo.dto.request.RoleCreateRequest;
 import com.example.simo.dto.response.RoleResponse;
 import com.example.simo.model.Role;
-import com.example.simo.model.RoleRepository;
+import com.example.simo.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;

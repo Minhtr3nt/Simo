@@ -17,6 +17,7 @@ public class User {
     @Column(unique = true)
     private String userName;
     private String password;
+    @Column(unique = true)
     private String consumerKey;
     private String secretKey;
 

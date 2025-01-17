@@ -12,4 +12,8 @@ public class SimoException extends RuntimeException{
         this.errorCode = errorCode;
     }
     private ErrorCode errorCode;
+
+    public SimoException(String message, Throwable cause){
+        super(message, cause);
+    }
 }
