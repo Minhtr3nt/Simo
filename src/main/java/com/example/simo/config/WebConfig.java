@@ -17,6 +17,10 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
@@ -75,5 +79,6 @@ public class WebConfig{
     public ModelMapper modelMapper(){
         return new ModelMapper();
     }
+
 }
 

@@ -21,15 +21,20 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
 
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,10 +44,11 @@ public class SimoService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
-    private final RedisTemplate redisTemplate;
     private final ModelMapper modelMapper;
     private final CustomerAccountMapper customerAccountMapper;
     private final ReportRepository reportRepository;
+
+
 
     @Value("${auth.token.expirationInMils}")
     protected Long VALID_TIME;
@@ -52,6 +58,116 @@ public class SimoService {
 
     @Value("${auth.token.jwtSecret}")
     protected String SIGNER_KEY;
+
+    public ApiResponse collectCustomerAccount(String maYeuCau, String kyBaoCao, Set<CustomerAccountRequest> request)  {
+       // redisTemplate.opsForList().leftPushAll(key, requests);
+
+        int batchSize = 100;
+        List<List<CustomerAccountRequest>> cusAccountBatches = new ArrayList<>();
+        List<CustomerAccountRequest> batch = new ArrayList<>();
+        for(CustomerAccountRequest account: request){
+            batch.add(account);
+            if(batch.size()>=batchSize){
+                cusAccountBatches.add(batch);
+                batch.clear();
+            }
+        }
+        if(cusAccountBatches.isEmpty()){
+            cusAccountBatches.add(batch);
+        }
+        ExecutorService executorService =  Executors.newFixedThreadPool(cusAccountBatches.size());
+       try {
+
+           List<Future<?>> futures = new ArrayList<>();
+           for(List<CustomerAccountRequest> batch2: cusAccountBatches ) {
+                futures.add(executorService.submit(() -> saveCustomerAccount(maYeuCau, kyBaoCao, batch2)));
+
+           }
+           for(Future<?> future: futures) {
+               future.get();
+           }
+           return new ApiResponse(0, "Save successful", null);
+
+       }catch (ExecutionException | InterruptedException e){
+            throw new SimoException(ErrorCode.STOP_SAVE_PROCESS);
+       }finally {
+           executorService.shutdown();
+       }
+
+    }
+
+    private void saveCustomerAccount(String maYeuCau, String kyBaoCao, List<CustomerAccountRequest> request){
+        ReportCustomerAccount report = new ReportCustomerAccount();
+        report.setMaYeuCau(maYeuCau);
+        report.setKyBaoCao(kyBaoCao);
+        report.setLoaiBaoCao("Thu thập danh sách TKTT định kỳ");
+
+        Set<CustomerAccount> customerAccounts = request.stream()
+                .map(customerAccountMapper::toCustomerAccount)
+                .peek(customerAccount -> customerAccount.setReportCustomerAccount(report))
+                .collect(Collectors.toSet());
+        report.setCustomerAccounts(customerAccounts);
+        reportRepository.save(report);
+
+
+    }
+
+    public ApiResponse collectSuspectFraudAccount(String maYeuCau, String kyBaoCao, Set<SuspectedFraudAccountRequest> requests){
+        int batch_size = 100;
+        List<List<SuspectedFraudAccountRequest>> batchs = new ArrayList<>();
+        List<SuspectedFraudAccountRequest> batch = new ArrayList<>();
+        for(SuspectedFraudAccountRequest account : requests){
+            batch.add(account);
+            if(batch.size()>=100){
+                batchs.add(batch);
+                batch.clear();
+            }
+        }
+        if(batchs.isEmpty()){
+            batchs.add(batch);
+            batch.clear();
+        }
+        ExecutorService executorService = Executors.newFixedThreadPool(batchs.size());
+
+        try {
+            List<Future<?>> futures = new ArrayList<>();
+            for (List<SuspectedFraudAccountRequest> batch1 : batchs) {
+                futures.add(executorService.submit(() -> saveFraudCustomerAccount(maYeuCau, kyBaoCao, batch1)));
+            }
+            for (Future<?> future : futures) {
+                future.get();
+            }
+
+        }catch(ExecutionException| InterruptedException e){
+            throw new SimoException(ErrorCode.STOP_SAVE_PROCESS);
+        }
+        executorService.shutdown();
+        return new ApiResponse(0,"Successful", true);
+    }
+
+    private void saveFraudCustomerAccount(String maYeuCau, String kyBaoCao, List<SuspectedFraudAccountRequest> requests){
+
+        ReportCustomerAccount report = new ReportCustomerAccount();
+        report.setMaYeuCau(maYeuCau);
+        report.setKyBaoCao(kyBaoCao);
+        report.setLoaiBaoCao("Thu thập danh sách TKTT nghi ngờ gian lận");
+
+        if(reportRepository.existsById(maYeuCau)){
+            throw new SimoException(ErrorCode.REPORT_CODE_INVALID);
+        }
+        Set<SuspectedFraudAccount> accounts = requests.stream()
+                .map(account-> modelMapper.map(account,SuspectedFraudAccount.class ))
+                .peek(customerAccount -> customerAccount.setReportCustomerAccount(report))
+                .collect(Collectors.toSet());
+
+        report.setSuspectedFraudAccounts(accounts);
+
+        reportRepository.save(report);
+
+    }
+
+    // Xử lý tạo, xác thực, refresh token.
+
     private final CustomerAccountRepository customerAccountRepository;
 
     public TokenResponse getToken( String userName, String password ,String consumerKey, String secretKey){
@@ -75,43 +191,6 @@ public class SimoService {
             return generateToken(user);
         }
         throw new SimoException(ErrorCode.TOKEN_EXPIRED_REFRESH);
-    }
-    public ApiResponse collectCustomerAccount(String maYeuCau, String kyBaoCao, Set<CustomerAccountRequest> request){
-       // redisTemplate.opsForList().leftPushAll(key, requests);
-        ReportCustomerAccount report = new ReportCustomerAccount();
-        report.setMaYeuCau(maYeuCau);
-        report.setKyBaoCao(kyBaoCao);
-        report.setLoaiBaoCao("Thu thập danh sách TKTT định kỳ");
-
-        Set<CustomerAccount> customerAccounts = request.stream()
-                .map(customerAccountMapper::toCustomerAccount)
-                .peek(customerAccount -> customerAccount.setReportCustomerAccount(report))
-                .collect(Collectors.toSet());
-
-        report.setCustomerAccounts(customerAccounts);
-        reportRepository.save(report);
-        return new ApiResponse(0, "Successful", true);
-
-    }
-    public ApiResponse collectSuspectFraudAccount(String maYeuCau, String kyBaoCao, Set<SuspectedFraudAccountRequest> requests){
-        ReportCustomerAccount report = new ReportCustomerAccount();
-        report.setMaYeuCau(maYeuCau);
-        report.setKyBaoCao(kyBaoCao);
-        report.setLoaiBaoCao("Thu thập danh sách TKTT nghi ngờ gian lận");
-        if(reportRepository.existsById(maYeuCau)){
-            throw new SimoException(ErrorCode.REPORTCODE_INVALID);
-        }
-        Set<SuspectedFraudAccount> accounts = requests.stream()
-                .map(account-> modelMapper.map(account,SuspectedFraudAccount.class ))
-                .peek(customerAccount -> customerAccount.setReportCustomerAccount(report))
-                .collect(Collectors.toSet());
-
-        report.setSuspectedFraudAccounts(accounts);
-
-        reportRepository.save(report);
-
-
-        return new ApiResponse(0,"Successful", true);
     }
 
     public boolean verifiedToken(String token, boolean refresh) throws JOSEException, ParseException {

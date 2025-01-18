@@ -24,7 +24,8 @@ public enum ErrorCode {
     NOT_VALID_CHARACTERS_AMOUNT(1015, "Don't let any field empty", HttpStatus.BAD_REQUEST),
     UNAUTHENTICATED(1016, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     DUPLICATE_ENTRY_EXCEPTION(1017, "Your id info is duplicated", HttpStatus.BAD_REQUEST),
-    REPORTCODE_INVALID(1018, "Report code is invalid", HttpStatus.BAD_REQUEST)
+    REPORT_CODE_INVALID(1018, "Report code is invalid", HttpStatus.BAD_REQUEST),
+    STOP_SAVE_PROCESS(1019, "Something wrong in process save data", HttpStatus.NOT_FOUND)
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode){
