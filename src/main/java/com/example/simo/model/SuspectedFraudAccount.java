@@ -21,6 +21,7 @@ public class SuspectedFraudAccount {
     private int trangThaiHoatDongTaiKhoan;
     private int nghiNgo;
     private String ghiChu;
+    private String threadName;
 
     @ManyToOne
     @JoinColumn(name = "report_id", referencedColumnName = "maYeuCau")

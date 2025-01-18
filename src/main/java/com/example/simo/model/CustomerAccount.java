@@ -32,6 +32,7 @@ public class CustomerAccount {
     private int phuongThucMoTaiKhoan;
     private String ngayXacThucTaiQuay;
     private String quocTich;
+    private String threadName;
 
     @ManyToOne
     @JoinColumn(name = "report_id", referencedColumnName = "maYeuCau")

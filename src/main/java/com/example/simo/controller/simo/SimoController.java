@@ -94,7 +94,7 @@ public class SimoController {
     public ResponseEntity<ApiResponse> getListCustomerAccount(@RequestHeader("maYeuCau") String maYeuCau,
                                                               @RequestHeader("kyBaoCao") String kyBaoCao,
                                                               @RequestBody Set<CustomerAccountRequest> requests){
-        ApiResponse apiResponse = simoService.collectCustomerAccount(maYeuCau, kyBaoCao,requests);
+        ApiResponse apiResponse = simoService.collectCustomerAccount(maYeuCau, kyBaoCao, requests);
         return ResponseEntity.ok().body(apiResponse);
     }
 

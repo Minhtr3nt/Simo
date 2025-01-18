@@ -1,14 +1,12 @@
 package com.example.simo.model;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.NaturalId;
 import org.w3c.dom.stylesheets.LinkStyle;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -18,7 +16,6 @@ import java.util.Set;
 public class ReportCustomerAccount {
 
     @Id
-    @NaturalId
     private String maYeuCau;
 
     private String kyBaoCao;
@@ -26,8 +23,8 @@ public class ReportCustomerAccount {
     private String loaiBaoCao;
 
     @OneToMany(mappedBy = "reportCustomerAccount", cascade = CascadeType.ALL, orphanRemoval = true)
-    Set<CustomerAccount> customerAccounts;
+    Set<CustomerAccount> customerAccounts = new HashSet<>(); ;
 
     @OneToMany(mappedBy = "reportCustomerAccount", cascade = CascadeType.ALL, orphanRemoval = true)
-    Set<SuspectedFraudAccount> suspectedFraudAccounts;
+    Set<SuspectedFraudAccount> suspectedFraudAccounts= new HashSet<>();;
 }

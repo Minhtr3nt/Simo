@@ -75,4 +75,6 @@ public class CustomerAccountRequest {
     @NotNull(message = "NON_NULL")
     @Size(max = 36, message = "NOT_VALID_CHARACTERS_AMOUNT")
     private String quocTich;
+
+
 }
